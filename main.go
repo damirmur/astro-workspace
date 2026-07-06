@@ -6,6 +6,7 @@ import (
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
@@ -122,7 +123,7 @@ func main() {
 			}
 			log.Println("Коллекция 'ai_sessions' создана!")
 		}
-
+    se.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), true))
 		return e.Next()
 	})
 
