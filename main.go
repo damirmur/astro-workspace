@@ -123,7 +123,7 @@ func main() {
 			}
 			log.Println("Коллекция 'ai_sessions' создана!")
 		}
-    se.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), true))
+    e.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), true))
 		return e.Next()
 	})
 
