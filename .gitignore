@@ -1,0 +1,11 @@
+pb_data/
+main
+*.exe
+cron/
+sessions/
+state/
+memory/
+HEARTBEAT.md
+heartbeat.log
+pb_data/
+temp/
