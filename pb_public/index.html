@@ -59,6 +59,18 @@
                 <button class="btn btn-success" onclick="createNewProject()">+ Создать проект</button>
             </div>
         </div>
+        <!-- ПАНЕЛЬ ИНТЕРАКТИВНЫХ ФИЛЬТРОВ -->
+        <div class="filters-panel" style="background: #1e293b; border: 1px solid #334155; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; align-items: center; font-size: 14px;">
+            <span style="color: #94a3b8; font-weight: bold;">🔍 Фильтры бэклога:</span>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="filter-hide-done" onchange="applyFilters()"> Скрыть выполненные (Done / Canceled)
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="filter-only-critical" onchange="applyFilters()"> 🔥 Только Критические баги
+            </label>
+            <!-- Ссылка на GitHub проекта, будет заполняться динамически -->
+            <a id="project-github-link" href="#" target="_blank" style="margin-left: auto; color: #38bdf8; text-decoration: none; display: none; align-items: center; gap: 6px;">📦 GitHub Репозиторий →</a>
+        </div>
 
         <!-- ДЕРЕВО ЗАДАЧ ТЕКУЩЕГО ПРОЕКТА -->
         <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
@@ -72,6 +84,9 @@
     <script src="config.js"></script>
     <script src="api.js"></script>
     <script src="engine.js"></script>
-    <script src="ui.js"></script>
+        <!-- Новая разделенная UI-система -->
+    <script src="ui-render.js"></script>
+    <script src="ui-actions.js"></script>
+    <script src="ui-auth.js"></script>
 </body>
 </html>

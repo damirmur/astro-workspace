@@ -95,13 +95,50 @@ async function apiClearDependencies(taskId) {
     });
 }
 
-// Сетевой запрос авторизации по email/паролю
+// Сетевой запрос авторизации с ручным дублированием в localStorage для надежности F5
 async function apiAuthUser(email, password) {
-    // Метод authWithPassword проверяет данные, сохраняет токен локально и возвращает объект сессии
-    return await pb.collection('users').authWithPassword(email, password);
+    // 1. Делаем запрос авторизации к коллекции users
+    const authData = await pb.collection('users').authWithPassword(email, password);
+    
+    // 2. Жестко записываем слепок сессии в localStorage, чтобы он не стирался при обновлении страницы
+    localStorage.setItem('pocketbase_auth', JSON.stringify({
+        token: pb.authStore.token,
+        record: pb.authStore.model
+    }));
+    
+    return authData;
 }
 
 // Сетевой сброс токена при выходе
 function apiLogoutUser() {
-    pb.authStore.clear(); // Полностью вычищаем токены из памяти браузера
+    pb.authStore.clear();
+    localStorage.removeItem('pocketbase_auth'); // Вычищаем диск
+}
+
+// Запрос данных одного конкретного проекта (для получения repo_url)
+async function fetchProjectMeta(projectId) {
+    return await pb.collection('projects').getOne(projectId);
+}
+// Обновление приоритета задачи в базе
+async function apiUpdateTaskPriority(taskId, newPriority) {
+    return await pb.collection('tasks').update(taskId, { priority: newPriority });
+}
+
+// Обновление дедлайна задачи в базе
+async function apiUpdateTaskDeadline(taskId, newDeadlineIso) {
+    return await pb.collection('tasks').update(taskId, { deadline: newDeadlineIso });
+}
+// Глобальный массив для хранения пользователей проекта
+let globalUsers = [];
+
+// Загрузка всех пользователей из PocketBase
+async function fetchAllUsers() {
+    globalUsers = await pb.collection('users').getFullList();
+}
+
+// Обновление исполнителя задачи в SQLite
+async function apiUpdateTaskAssignee(taskId, newUserId) {
+    return await pb.collection('tasks').update(taskId, {
+        assigned_to: newUserId || null // Если выбран пустой пункт — снимаем назначение
+    });
 }
