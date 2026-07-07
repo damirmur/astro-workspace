@@ -4,49 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT & Astro Workspace</title>
-    <!-- Подключаем внешние стили -->
     <link rel="stylesheet" href="style.css">
-    <!-- Подключаем локальный SDK PocketBase -->
     <script src="pocketbase.umd.js"></script>
 </head>
 <body>
 
-    <h1>💻 Мультипроектное пространство разработки</h1>
+    <!-- ОКНО АВТОРИЗАЦИИ (Блокирует экран до входа) -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <h2>🔑 Вход в систему</h2>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:15px;">Введите данные учетной записи живого сотрудника или ИИ-агента</p>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="login-email" required placeholder="worker@test.ru">
+                </div>
+                <div class="form-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="login-password" required placeholder="••••••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Войти</button>
+            </form>
+        </div>
+    </div>
 
-    <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ПРОЕКТАМИ -->
-    <div class="project-panel">
-        <div>
-            <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Текущий проект:</label>
-            <div style="display: flex; gap: 10px;">
-                <select id="project-selector" onchange="selectProject()"></select>
-                <!-- Кнопка экспорта текущего проекта -->
-                <button class="btn btn-subtask" style="padding: 8px 12px;" onclick="exportCurrentProject()">📥 Экспорт</button>
-                <!-- Кнопка импорта (кликает по скрытому файловому инпуту ниже) -->
-                <button class="btn btn-subtask" style="padding: 8px 12px;" onclick="document.getElementById('import-file-input').click()">📤 Импорт</button>
-                <!-- Скрытый инпут для выбора JSON файла -->
-                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importProjectFile(event)">
+    <!-- ОСНОВНОЙ ИНТЕРФЕЙС ПРИЛОЖЕНИЯ -->
+    <div id="main-workspace" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h1>💻 Мультипроектное пространство разработки</h1>
+            <!-- Информация о текущей сессии -->
+            <div class="user-badge">
+                👤 <span id="user-display-name">Загрузка...</span> 
+                (<span id="user-display-role" style="color:#38bdf8;">role</span>)
+                <button class="btn-logout" onclick="handleLogout()">Выйти 🚪</button>
             </div>
         </div>
-        <div style="margin-left: auto; display: flex; gap: 10px; align-items: flex-end;">
+
+        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ПРОЕКТАМИ -->
+        <div class="project-panel">
             <div>
-                <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Новый проект:</label>
-                <input type="text" id="new-project-title" placeholder="Например: Разработка на Go">
+                <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Текущий проект:</label>
+                <div style="display: flex; gap: 10px;">
+                    <select id="project-selector" onchange="selectProject()"></select>
+                    <button class="btn btn-subtask" style="padding: 8px 12px;" onclick="exportCurrentProject()">📥 Экспорт</button>
+                    <button class="btn btn-subtask" style="padding: 8px 12px;" onclick="document.getElementById('import-file-input').click()">📤 Импорт</button>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importProjectFile(event)">
+                </div>
             </div>
-            <button class="btn btn-success" onclick="createNewProject()">+ Создать проект</button>
+            <div style="margin-left: auto; display: flex; gap: 10px; align-items: flex-end;">
+                <div>
+                    <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Новый проект:</label>
+                    <input type="text" id="new-project-title" placeholder="Например: Разработка на Go">
+                </div>
+                <button class="btn btn-success" onclick="createNewProject()">+ Создать проект</button>
+            </div>
         </div>
+
+        <!-- ДЕРЕВО ЗАДАЧ ТЕКУЩЕГО ПРОЕКТА -->
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+            <h2 id="current-project-name" style="color: #38bdf8; margin: 0;">Загрузка...</h2>
+            <button id="root-task-btn" class="btn btn-primary" style="display:none;" onclick="createSubtask(event, '')">+ Корневой Эпик</button>
+        </div>
+        
+        <div id="workspace-tree">Загрузка дерева задач...</div>
     </div>
 
-    <!-- ДЕРЕВО ЗАДАЧ ТЕКУЩЕГО ПРОЕКТА -->
-    <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
-        <h2 id="current-project-name" style="color: #38bdf8; margin: 0;">Загрузка...</h2>
-        <button id="root-task-btn" class="btn btn-primary" style="display:none;" onclick="createSubtask(event, '')">+ Корневой Эпик</button>
-    </div>
-    
-    <div id="workspace-tree">Загрузка дерева задач...</div>
-
-    <!-- Подключаем модули в строгом порядке зависимостей -->
     <script src="config.js"></script>
     <script src="api.js"></script>
     <script src="engine.js"></script>
-    <script src="ui.js"></script></body>
+    <script src="ui.js"></script>
+</body>
 </html>

@@ -198,3 +198,71 @@ pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #a7f3d0; ov
     text-decoration: line-through;
     color: #64748b;
 }
+
+/* Окно авторизации на весь экран */
+.login-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #0f172a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.login-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 30px;
+    border-radius: 12px;
+    width: 350px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+.form-group input {
+    width: 100%;
+    background: #0f172a;
+    color: #e2e8f0;
+    border: 1px solid #475569;
+    padding: 10px;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+.form-group input:focus {
+    border-color: #38bdf8;
+    outline: none;
+}
+
+/* Плашка пользователя в шапке */
+.user-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.btn-logout {
+    background: none;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-logout:hover {
+    background: #7f1d1d;
+    color: white;
+}

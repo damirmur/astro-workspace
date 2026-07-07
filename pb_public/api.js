@@ -94,3 +94,14 @@ async function apiClearDependencies(taskId) {
         "depends_on": [] // Сбрасываем массив в ноль
     });
 }
+
+// Сетевой запрос авторизации по email/паролю
+async function apiAuthUser(email, password) {
+    // Метод authWithPassword проверяет данные, сохраняет токен локально и возвращает объект сессии
+    return await pb.collection('users').authWithPassword(email, password);
+}
+
+// Сетевой сброс токена при выходе
+function apiLogoutUser() {
+    pb.authStore.clear(); // Полностью вычищаем токены из памяти браузера
+}

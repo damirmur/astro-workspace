@@ -1,6 +1,27 @@
 // Главная функция инициализации рабочего пространства
+// Главная функция инициализации рабочего пространства (с учетом авторизации)
 async function initWorkspace() {
+    const loginOverlay = document.getElementById('login-overlay');
+    const mainWorkspace = document.getElementById('main-workspace');
+
+    // 1. ПРОВЕРКА: Авторизован ли пользователь в PocketBase?
+    if (!pb.authStore.isValid) {
+        // Если токена нет — показываем окно входа и блокируем интерфейс
+        loginOverlay.style.display = 'flex';
+        mainWorkspace.style.display = 'none';
+        return;
+    }
+
+    // 2. Если токен валиден — скрываем форму входа и открываем рабочую область
+    loginOverlay.style.display = 'none';
+    mainWorkspace.style.display = 'block';
+
+    // Выводим имя и роль текущего юзера в шапку из данных токена
+    document.getElementById('user-display-name').innerText = pb.authStore.model.email;
+    document.getElementById('user-display-role').innerText = pb.authStore.model.role.toUpperCase();
+
     try {
+        // 3. Загружаем справочники, проекты и задачи (теперь бэкенд пропустит эти запросы)
         await fetchMeta();
         const projects = await fetchProjects();
         const selector = document.getElementById('project-selector');
@@ -22,17 +43,40 @@ async function initWorkspace() {
         });
 
         if (!currentProjectId || !projects.some(p => p.id === currentProjectId)) {
-            currentProjectId = projects[0].id; // Исправлена прошлая опечатка с индексом массива!
+            currentProjectId = projects[0].id; 
         }
 
         selector.value = currentProjectId;
         document.getElementById('current-project-name').innerText = "📂 Проект: " + selector.options[selector.selectedIndex].text;
         document.getElementById('root-task-btn').style.display = 'block';
-
+        
         await renderProjectWorkspace(currentProjectId);
     } catch (err) {
-        console.error("Ошибка инициализации:", err);
+        console.error("Ошибка инициализации данных:", err);
     }
+}
+
+// Обработчик отправки формы входа
+async function handleLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-password').value;
+
+    try {
+        // Вызываем метод авторизации из api.js
+        await apiAuthUser(email, pass);
+        // В случае успеха перезапускаем рабочую область
+        await initWorkspace();
+    } catch (err) {
+        alert("🔒 Ошибка авторизации: Неверный Email или пароль!\n" + err.message);
+    }
+}
+
+// Обработчик нажатия кнопки Выйти
+function handleLogout() {
+    if (!confirm("Выйти из рабочего пространства?")) return;
+    apiLogoutUser(); // Чистим токены
+    initWorkspace(); // Возвращаем экран входа
 }
 
 // Загрузка и отрисовка дерева текущего проекта
