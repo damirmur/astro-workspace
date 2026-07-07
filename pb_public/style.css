@@ -136,4 +136,65 @@ pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #a7f3d0; ov
     background: #1e293b;
     color: #e2e8f0;
 }
+/* Подсветка типов задач */
+.task-card.task-type-epic {
+    border-left: 4px solid #a855f7; /* Пурпурный цвет для Эпиков */
+    background: #1e1b24;
+}
+.task-card.task-type-feature {
+    border-left: 4px solid #38bdf8; /* Голубой цвет для Фич */
+}
+.task-card.task-type-bug {
+    border-left: 4px solid #ef4444; /* Настоящий сочный красный для Багов */
+    background: #241a1a;
+}
+.task-card.task-type-step {
+    border-left: 4px solid #94a3b8; /* Спокойный серый для Шагов */
+}
 
+/* Кнопка создания связи зависимости */
+.btn-dep {
+    background: none;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-dep:hover {
+    border-color: #a855f7;
+    color: #a855f7;
+}
+
+/* Блок отображения списка зависимостей внутри карточки */
+.task-deps-list {
+    margin-top: 10px;
+    font-size: 12px;
+    background: #0f172a;
+    padding: 6px 10px;
+    border-radius: 4px;
+    color: #cbd5e1;
+    border-left: 2px solid #a855f7;
+}
+/* Стиль для селектора отмены */
+.status-select.status-canceled {
+    background: #1e293b;
+    color: #64748b;
+    border-color: #334155;
+    text-decoration: line-through; /* Зачеркнутый текст */
+}
+
+/* Визуальное приглушение всей карточки отмененной задачи */
+.task-card:has(.status-select.status-canceled) {
+    opacity: 0.35; /* Слегка приглушаем именно эту карточку */
+    border-left-color: #475569 !important; /* Делаем полосу типа нейтрально-серой */
+    background: #111827; /* Делаем фон чуть темнее */
+}
+
+/* Дополнительно зачеркиваем заголовок только отмененной задачи */
+.task-card:has(.status-select.status-canceled) .task-title span {
+    text-decoration: line-through;
+    color: #64748b;
+}

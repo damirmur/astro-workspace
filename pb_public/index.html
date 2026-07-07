@@ -17,7 +17,15 @@
     <div class="project-panel">
         <div>
             <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Текущий проект:</label>
-            <select id="project-selector" onchange="selectProject()"></select>
+            <div style="display: flex; gap: 10px;">
+                <select id="project-selector" onchange="selectProject()"></select>
+                <!-- Кнопка экспорта текущего проекта -->
+                <button class="btn btn-subtask" style="padding: 8px 12px;" onclick="exportCurrentProject()">📥 Экспорт</button>
+                <!-- Кнопка импорта (кликает по скрытому файловому инпуту ниже) -->
+                <button class="btn btn-subtask" style="padding: 8px 12px;" onclick="document.getElementById('import-file-input').click()">📤 Импорт</button>
+                <!-- Скрытый инпут для выбора JSON файла -->
+                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importProjectFile(event)">
+            </div>
         </div>
         <div style="margin-left: auto; display: flex; gap: 10px; align-items: flex-end;">
             <div>
@@ -36,7 +44,9 @@
     
     <div id="workspace-tree">Загрузка дерева задач...</div>
 
-    <!-- Подключаем скрипт логики в самом конце body -->
-    <script src="app.js"></script>
-</body>
+    <!-- Подключаем модули в строгом порядке зависимостей -->
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="engine.js"></script>
+    <script src="ui.js"></script></body>
 </html>
