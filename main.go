@@ -15,27 +15,41 @@ func main() {
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 
-		// 1. Создаем коллекцию TASK_TYPES (Динамические типы задач)
+		// 1. НАСТРОЙКА СИСТЕМНОЙ КОЛЛЕКЦИИ USERS (Добавляем Роль)
+		usersColl, err := app.FindCollectionByNameOrId("users")
+		if err == nil {
+			// Проверяем, есть ли уже поле role, если нет — добавляем
+			if usersColl.Fields.GetByName("role") == nil {
+				usersColl.Fields.Add(&core.SelectField{
+					Name:     "role",
+					Required: true,
+					Values:   []string{"admin", "user", "paid_user", "guest", "ai_agent"},
+				})
+				if err := app.Save(usersColl); err != nil {
+					return err
+				}
+				log.Println("Системная коллекция 'users' расширена полем 'role'!")
+			}
+		}
+
+		// 2. Создаем коллекцию TASK_TYPES (Динамические типы задач)
 		typesColl, err := app.FindCollectionByNameOrId("task_types")
 		if err != nil {
 			typesColl = core.NewBaseCollection("task_types")
-			typesColl.ListRule = types.Pointer("")
-			typesColl.ViewRule = types.Pointer("")
-			typesColl.CreateRule = types.Pointer("")
-			typesColl.UpdateRule = types.Pointer("")
+			typesColl.ListRule = types.Pointer("")                               // Доступно всем
+			typesColl.ViewRule = types.Pointer("")                               // Доступно всем
+			typesColl.CreateRule = types.Pointer("@request.auth.role = 'admin'") // Только админ
+			typesColl.UpdateRule = types.Pointer("@request.auth.role = 'admin'") // Только админ
 
 			typesColl.Fields.Add(
-				&core.TextField{Name: "name", Required: true}, // "Эпик", "Фича"...
-				&core.TextField{Name: "key", Required: true},  // "epic", "feature", "step", "bug"
-				&core.TextField{Name: "icon", Required: true}, // "📂", "✨", "📜", "🪲"
+				&core.TextField{Name: "name", Required: true},
+				&core.TextField{Name: "key", Required: true},
+				&core.TextField{Name: "icon", Required: true},
 			)
-
 			if err := app.Save(typesColl); err != nil {
 				return err
 			}
-			log.Println("Коллекция 'task_types' создана!")
 
-			// Заполняем дефолтными системными типами
 			defaultTypes := []map[string]string{
 				{"name": "Эпик", "key": "epic", "icon": "📂"},
 				{"name": "Фича", "key": "feature", "icon": "✨"},
@@ -51,17 +65,16 @@ func main() {
 					return err
 				}
 			}
-			log.Println("Системные типы задач импортированы!")
 		}
 
-		// 2. Создаем коллекцию TASK_STATUSES (Динамические статусы)
+		// 3. Создаем коллекцию TASK_STATUSES (Динамические статусы)
 		statusesColl, err := app.FindCollectionByNameOrId("task_statuses")
 		if err != nil {
 			statusesColl = core.NewBaseCollection("task_statuses")
 			statusesColl.ListRule = types.Pointer("")
 			statusesColl.ViewRule = types.Pointer("")
-			statusesColl.CreateRule = types.Pointer("")
-			statusesColl.UpdateRule = types.Pointer("")
+			statusesColl.CreateRule = types.Pointer("@request.auth.role = 'admin'")
+			statusesColl.UpdateRule = types.Pointer("@request.auth.role = 'admin'")
 
 			statusesColl.Fields.Add(
 				&core.TextField{Name: "name", Required: true},
@@ -69,7 +82,6 @@ func main() {
 				&core.NumberField{Name: "weight", Required: true},
 				&core.TextField{Name: "color"},
 			)
-
 			if err := app.Save(statusesColl); err != nil {
 				return err
 			}
@@ -78,6 +90,7 @@ func main() {
 				{"name": "TODO", "key": "todo", "weight": 1, "color": "#fbbf24"},
 				{"name": "In Progress", "key": "in_progress", "weight": 2, "color": "#60a5fa"},
 				{"name": "Done", "key": "done", "weight": 3, "color": "#34d399"},
+				{"name": "Canceled", "key": "canceled", "weight": 3, "color": "#64748b"},
 			}
 			for _, st := range defaultStatuses {
 				record := core.NewRecord(statusesColl)
@@ -89,16 +102,15 @@ func main() {
 					return err
 				}
 			}
-			log.Println("Базовые статусы импортированы!")
 		}
 
-		// 3. Создаем коллекцию ENTITIES
+		// 4. Создаем коллекцию ENTITIES
 		entitiesColl, err := app.FindCollectionByNameOrId("entities")
 		if err != nil {
 			entitiesColl = core.NewBaseCollection("entities")
-			entitiesColl.ListRule = types.Pointer("")
-			entitiesColl.ViewRule = types.Pointer("")
-			entitiesColl.CreateRule = types.Pointer("")
+			entitiesColl.ListRule = types.Pointer("@request.auth.id != ''") // Только авторизованные
+			entitiesColl.ViewRule = types.Pointer("@request.auth.id != ''")
+			entitiesColl.CreateRule = types.Pointer("@request.auth.role = 'admin'") //Entities создает только админ
 
 			entitiesColl.Fields.Add(
 				&core.TextField{Name: "name", Required: true},
@@ -111,13 +123,19 @@ func main() {
 			}
 		}
 
-		// 4. Создаем коллекцию PROJECTS
+		// 5. Создаем коллекцию PROJECTS (Защищенная ролями)
 		projectsColl, err := app.FindCollectionByNameOrId("projects")
 		if err != nil {
 			projectsColl = core.NewBaseCollection("projects")
-			projectsColl.ListRule = types.Pointer("")
-			projectsColl.ViewRule = types.Pointer("")
-			projectsColl.CreateRule = types.Pointer("")
+
+			// Матрица доступа для Проектов:
+			// Гость (без токена) не видит ничего. Авторизованный ИИ-агент или Пользователь видят проекты.
+			// Создавать проекты ИИ-агентам запрещено (@request.auth.role != 'ai_agent')
+			projectsColl.ListRule = types.Pointer("@request.auth.id != ''")
+			projectsColl.ViewRule = types.Pointer("@request.auth.id != ''")
+			projectsColl.CreateRule = types.Pointer("@request.auth.id != '' && @request.auth.role != 'ai_agent' && @request.auth.role != 'guest'")
+			projectsColl.UpdateRule = types.Pointer("@request.auth.role = 'admin' || @request.auth.role = 'user' || @request.auth.role = 'paid_user'")
+			projectsColl.DeleteRule = types.Pointer("@request.auth.role = 'admin'") // Удаляет только админ-человек
 
 			projectsColl.Fields.Add(
 				&core.TextField{Name: "title", Required: true},
@@ -131,28 +149,31 @@ func main() {
 			}
 		}
 
-		// 5. Создаем коллекцию TASKS (Расширенная под типы и зависимости)
+		// 6. Создаем коллекцию TASKS (С графом исполнителей и защитой)
 		tasksColl, err := app.FindCollectionByNameOrId("tasks")
 		if err != nil {
 			tasksColl = core.NewBaseCollection("tasks")
-			tasksColl.ListRule = types.Pointer("")
-			tasksColl.ViewRule = types.Pointer("")
-			tasksColl.CreateRule = types.Pointer("")
-			tasksColl.UpdateRule = types.Pointer("")
+
+			// Матрица доступа для Задач:
+			// Чтение разрешено всем авторизованным.
+			// Создавать задачи могут все, КРОМЕ гостей. ИИ-агент может создавать подзадачи.
+			// Удаление запрещено ИИ-агентам полностью.
+			tasksColl.ListRule = types.Pointer("@request.auth.id != ''")
+			tasksColl.ViewRule = types.Pointer("@request.auth.id != ''")
+			tasksColl.CreateRule = types.Pointer("@request.auth.id != '' && @request.auth.role != 'guest'")
+			tasksColl.UpdateRule = types.Pointer("@request.auth.id != '' && @request.auth.role != 'guest'")
+			tasksColl.DeleteRule = types.Pointer("@request.auth.role = 'admin' || @request.auth.role = 'user'")
 
 			tasksColl.Fields.Add(
 				&core.TextField{Name: "title", Required: true},
 				&core.RelationField{Name: "status", CollectionId: statusesColl.Id, MaxSelect: 1, Required: true},
-
-				// ТЕПЕРЬ У ЗАДАЧИ ЕСТЬ СВЯЗЬ НА ТИП (Эпик, Фича...)
 				&core.RelationField{Name: "type", CollectionId: typesColl.Id, MaxSelect: 1, Required: true},
+				&core.RelationField{Name: "project", CollectionId: projectsColl.Id, MaxSelect: 1, CascadeDelete: true},
+				&core.RelationField{Name: "entity", CollectionId: entitiesColl.Id, MaxSelect: 1},
 
-				&core.RelationField{
-					Name:          "project",
-					CollectionId:  projectsColl.Id,
-					MaxSelect:     1,
-					CascadeDelete: true,
-				}, &core.RelationField{Name: "entity", CollectionId: entitiesColl.Id, MaxSelect: 1},
+				// ГИБРИДНАЯ ОРКЕСТРАЦИЯ: Назначаем задачу на пользователя (Человека или ИИ-агента)
+				&core.RelationField{Name: "assigned_to", CollectionId: usersColl.Id, MaxSelect: 1},
+
 				&core.JSONField{Name: "astro_coordinates"},
 				&core.FileField{Name: "attachments", MaxSelect: 10},
 				&core.EditorField{Name: "notes"},
@@ -164,27 +185,24 @@ func main() {
 				return err
 			}
 
-			// Второй этап — добавляем связи на саму себя (parent_task Иdepends_on)
+			// Второй этап — self-relations
 			tasksColl.Fields.Add(
 				&core.RelationField{Name: "parent_task", CollectionId: tasksColl.Id, MaxSelect: 1},
-
-				// МАГИЯ ПОСЛЕДОВАТЕЛЬНОСТИ: Список задач, от которых зависит текущая
 				&core.RelationField{Name: "depends_on", CollectionId: tasksColl.Id, MaxSelect: 99},
 			)
-
 			if err := app.Save(tasksColl); err != nil {
 				return err
 			}
-			log.Println("Коллекция 'tasks' успешно создана со связями последовательности выполнения!")
+			log.Println("Коллекция 'tasks' защищена ролевой моделью!")
 		}
 
-		// 6. Создаем коллекцию AI_SESSIONS
+		// 7. Создаем коллекцию AI_SESSIONS
 		_, err = app.FindCollectionByNameOrId("ai_sessions")
 		if err != nil {
 			aiSessions := core.NewBaseCollection("ai_sessions")
-			aiSessions.ListRule = types.Pointer("")
-			aiSessions.ViewRule = types.Pointer("")
-			aiSessions.CreateRule = types.Pointer("")
+			aiSessions.ListRule = types.Pointer("@request.auth.id != ''")
+			aiSessions.ViewRule = types.Pointer("@request.auth.id != ''")
+			aiSessions.CreateRule = types.Pointer("@request.auth.role = 'admin' || @request.auth.role = 'ai_agent' || @request.auth.role = 'paid_user'")
 
 			aiSessions.Fields.Add(
 				&core.RelationField{Name: "task", CollectionId: tasksColl.Id, MaxSelect: 1},
@@ -200,7 +218,7 @@ func main() {
 			}
 		}
 
-		// Раздаем статику pb_public
+		// Раздаем статику
 		e.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), true))
 
 		return e.Next()
