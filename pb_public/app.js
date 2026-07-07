@@ -128,11 +128,12 @@ function buildTree(list, parentId = null) {
     return branch;
 }
 
+// 1. Изменяем функцию рендера (заменяем бадж на селектор)
 function renderTreeHtml(nodes) {
     let html = '';
     nodes.forEach(node => {
         const hasChildren = node.children && node.children.length > 0;
-        const statusClass = `status-${node.status || 'todo'}`;
+        const currentStatus = node.status || 'todo';
         
         html += `<div class="task-container">`;
         html += `
@@ -142,7 +143,12 @@ function renderTreeHtml(nodes) {
                         ${hasChildren ? '▼' : '•'} <span>${node.title}</span>
                     </div>
                     <div class="task-actions">
-                        <span class="status-badge ${statusClass}">${node.status || 'todo'}</span>
+                        <!-- Интерактивный селектор статуса с динамическим классом цвета -->
+                        <select class="status-select status-${currentStatus}" onchange="updateTaskStatus(event, '${node.id}', this.value)">
+                            <option value="todo" ${currentStatus === 'todo' ? 'selected' : ''}>TODO</option>
+                            <option value="in_progress" ${currentStatus === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="done" ${currentStatus === 'done' ? 'selected' : ''}>Done</option>
+                        </select>
                         <button class="btn-subtask" onclick="createSubtask(event, '${node.id}')">+ Подзадача</button>
                     </div>
                 </div>
@@ -157,6 +163,29 @@ function renderTreeHtml(nodes) {
     });
     return html;
 }
+
+// 2. Добавляем функцию отправки нового статуса в SQLite через PocketBase API
+async function updateTaskStatus(event, taskId, newStatus) {
+    event.stopPropagation(); // Предотвращаем раскрытие карточки при смене статуса
+    
+    try {
+        // Шлем PATCH-запрос в коллекцию tasks
+        await pb.collection('tasks').update(taskId, {
+            status: newStatus
+        });
+        
+        // Перекрашиваем селектор налету, меняя его CSS-класс
+        const selectElement = event.target;
+        selectElement.className = `status-select status-${newStatus}`;
+        
+        console.log(`Статус задачи ${taskId} успешно изменен на ${newStatus}`);
+    } catch (err) {
+        alert("Не удалось обновить статус: " + err.message);
+        // В случае ошибки возвращаем дерево в исходное состояние
+        loadTasksForProject(currentProjectId);
+    }
+}
+
 
 // Запуск при загрузке страницы
 loadProjects();

@@ -70,6 +70,7 @@ func main() {
 			tasksColl.ListRule = types.Pointer("")
 			tasksColl.ViewRule = types.Pointer("")
 			tasksColl.CreateRule = types.Pointer("")
+			tasksColl.UpdateRule = types.Pointer("")
 
 			tasksColl.Fields.Add(
 				&core.TextField{Name: "title", Required: true},

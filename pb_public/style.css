@@ -99,3 +99,41 @@ input[type="text"] {
 .task-details.active { display: block; }
 pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #a7f3d0; overflow-x: auto; font-size: 12px; }
 .empty-state { text-align: center; padding: 20px; color: #94a3b8; border: 2px dashed #334155; border-radius: 8px; }
+
+/* Стили для интерактивного селектора статуса */
+.status-select {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s, color 0.2s;
+    min-width: 110px;
+}
+
+/* Цвета для разных состояний */
+.status-select.status-todo {
+    background: #3f2c06;
+    color: #fbbf24;
+    border-color: #78350f;
+}
+.status-select.status-in_progress {
+    background: #1e3a8a;
+    color: #60a5fa;
+    border-color: #1e40af;
+}
+.status-select.status-done {
+    background: #064e3b;
+    color: #34d399;
+    border-color: #065f46;
+}
+
+/* Стилизация выпадающего списка внутри вариантов */
+.status-select option {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
