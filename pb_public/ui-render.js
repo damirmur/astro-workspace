@@ -29,13 +29,14 @@ async function renderProjectWorkspace(projectId) {
     }
 }
 
-// 2. Применение интерактивных фильтров бэклога
+// 2. Применение интерактивных фильтров бэклога (С исправленной логикой для критических багов)
 function applyFilters() {
     const hideDone = document.getElementById('filter-hide-done').checked;
     const onlyCritical = document.getElementById('filter-only-critical').checked;
 
     let filteredRecords = [...currentProjectRecords];
 
+    // Фильтр А: Скрыть выполненные / отмененные
     if (hideDone) {
         filteredRecords = filteredRecords.filter(r => {
             const statusKey = r.expand?.status?.key || 'todo';
@@ -43,12 +44,26 @@ function applyFilters() {
         });
     }
 
+    // Фильтр Б: Только критические баги (С сохранением цепочки родителей, чтобы дерево не исчезало)
     if (onlyCritical) {
-        filteredRecords = filteredRecords.filter(r => {
-            // Проверяем приоритет без учета регистра
-            const isCritical = r.priority && r.priority.toLowerCase() === 'critical';
-            return isCritical;
+        // 1. Сначала находим ID всех критических багов в массиве
+        const criticalBugIds = filteredRecords
+            .filter(r => r.priority && r.priority.toLowerCase() === 'critical')
+            .map(r => r.id);
+
+        // 2. Функция рекурсивного сбора всех родителей для найденных багов
+        const idsToShow = new Set(criticalBugIds);
+        
+        criticalBugIds.forEach(bugId => {
+            let current = filteredRecords.find(r => r.id === bugId);
+            while (current && current.parent_task) {
+                idsToShow.add(current.parent_task);
+                current = filteredRecords.find(r => r.id === current.parent_task);
+            }
         });
+
+        // 3. Оставляем в массиве только сами критические баги и их цепочку родителей для рендера
+        filteredRecords = filteredRecords.filter(r => idsToShow.has(r.id));
     }
 
     if (filteredRecords.length === 0) {
@@ -59,6 +74,7 @@ function applyFilters() {
     const treeData = buildTree(filteredRecords);
     document.getElementById('workspace-tree').innerHTML = renderTreeHtml(treeData, currentProjectRecords);
 }
+
 
 // 3. Динамический HTML-рендер с отображением исполнителей, приоритетов и дедлайнов
 function renderTreeHtml(nodes, allRecords) {
