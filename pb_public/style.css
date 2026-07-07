@@ -1,0 +1,101 @@
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    background: #0f172a; 
+    color: #e2e8f0; 
+    padding: 30px; 
+}
+h1 { 
+    color: #38bdf8; 
+    border-bottom: 1px solid #334155; 
+    padding-bottom: 10px; 
+    margin-bottom: 20px; 
+}
+
+/* Панель проектов */
+.project-panel { 
+    background: #1e293b; 
+    border: 1px solid #334155; 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-bottom: 25px; 
+    display: flex; 
+    gap: 15px; 
+    align-items: center; 
+    flex-wrap: wrap; 
+}
+select { 
+    background: #0f172a; 
+    color: #e2e8f0; 
+    border: 1px solid #475569; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    font-size: 14px; 
+    min-width: 250px; 
+    cursor: pointer; 
+}
+input[type="text"] { 
+    background: #0f172a; 
+    color: #e2e8f0; 
+    border: 1px solid #475569; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    font-size: 14px; 
+    width: 250px; 
+}
+
+/* Кнопки */
+.btn { 
+    border: none; 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    font-size: 14px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: 0.2s; 
+}
+.btn-primary { background: #0284c7; color: white; }
+.btn-primary:hover { background: #0369a1; }
+.btn-success { background: #16a34a; color: white; }
+.btn-success:hover { background: #15803d; }
+.btn-subtask { 
+    background: #334155; 
+    color: #94a3b8; 
+    border: 1px solid #475569; 
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-size: 12px; 
+    cursor: pointer; 
+}
+.btn-subtask:hover { border-color: #38bdf8; color: #38bdf8; }
+
+/* Дерево задач */
+.tree-node { 
+    margin-left: 25px; 
+    border-left: 2px dashed #334155; 
+    padding-left: 15px; 
+    position: relative; 
+}
+.task-card { 
+    background: #1e293b; 
+    border: 1px solid #475569; 
+    padding: 12px; 
+    margin: 8px 0; 
+    border-radius: 6px; 
+    transition: 0.2s; 
+}
+.task-card:hover { border-color: #38bdf8; }
+.task-header { display: flex; justify-content: space-between; align-items: center; }
+.task-title { font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.task-actions { display: flex; gap: 10px; align-items: center; }
+
+/* Баджи статусов */
+.status-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+.status-in_progress { background: #1e3a8a; color: #60a5fa; }
+.status-todo { background: #3f2c06; color: #fbbf24; }
+.status-done { background: #064e3b; color: #34d399; }
+
+/* Детали задачи */
+.task-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155; font-size: 14px; color: #94a3b8; }
+.task-details.active { display: block; }
+pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #a7f3d0; overflow-x: auto; font-size: 12px; }
+.empty-state { text-align: center; padding: 20px; color: #94a3b8; border: 2px dashed #334155; border-radius: 8px; }

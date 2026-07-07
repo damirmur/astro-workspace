@@ -3,116 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Astro & IT Workspace</title>
-    <script src="https://unpkg.com/pocketbase@0.27.0/dist/pocketbase.umd.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 30px; }
-        h1 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .tree-node { margin-left: 25px; border-left: 2px dashed #334155; padding-left: 15px; position: relative; }
-        .tree-node::before { content: "—"; position: absolute; left: 0; color: #334155; }
-        .task-card { background: #1e293b; border: 1px solid #475569; padding: 12px; margin: 8px 0; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .task-card:hover { border-color: #38bdf8; background: #1e293b; }
-        .task-header { display: flex; justify-content: space-between; align-items: center; }
-        .task-title { font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .status-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
-        .status-in_progress { background: #1e3a8a; color: #60a5fa; }
-        .status-todo { background: #3f2c06; color: #fbbf24; }
-        .status-done { background: #064e3b; color: #34d399; }
-        .task-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155; font-size: 14px; color: #94a3b8; }
-        .task-details.active { display: block; }
-        pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #a7f3d0; overflow-x: auto; font-size: 12px; }
-        .toggle-btn { background: none; border: none; color: #38bdf8; cursor: pointer; font-size: 16px; padding: 0 5px; }
-    </style>
+    <title>IT & Astro Workspace</title>
+    <!-- Подключаем внешние стили -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Подключаем локальный SDK PocketBase -->
+    <script src="pocketbase.umd.js"></script>
 </head>
 <body>
 
-    <h1>🔮 Рабочее Пространство: Дерево Задач</h1>
-    <div id="workspace-tree">Загрузка данных из бесконечной базы...</div>
+    <h1>💻 Мультипроектное пространство разработки</h1>
 
-    <script>
-        // Инициализируем PocketBase на локальном порту
-        const pb = new PocketBase('http://localhost:8090');
+    <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ПРОЕКТАМИ -->
+    <div class="project-panel">
+        <div>
+            <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Текущий проект:</label>
+            <select id="project-selector" onchange="selectProject()"></select>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 10px; align-items: flex-end;">
+            <div>
+                <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:4px;">Новый проект:</label>
+                <input type="text" id="new-project-title" placeholder="Например: Разработка на Go">
+            </div>
+            <button class="btn btn-success" onclick="createNewProject()">+ Создать проект</button>
+        </div>
+    </div>
 
-        // Функция переключения видимости деталей карточки
-        function toggleDetails(e, id) {
-            e.stopPropagation();
-            const details = document.getElementById(`details-${id}`);
-            details.classList.toggle('active');
-        }
+    <!-- ДЕРЕВО ЗАДАЧ ТЕКУЩЕГО ПРОЕКТА -->
+    <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+        <h2 id="current-project-name" style="color: #38bdf8; margin: 0;">Загрузка...</h2>
+        <button id="root-task-btn" class="btn btn-primary" style="display:none;" onclick="createSubtask(event, '')">+ Корневой Эпик</button>
+    </div>
+    
+    <div id="workspace-tree">Загрузка дерева задач...</div>
 
-        // Построение иерархического дерева из плоского массива
-        function buildTree(list, parentId = null) {
-            let branch = [];
-            list.forEach(item => {
-                if (item.parent_task === parentId || (!parentId && !item.parent_task)) {
-                    const children = buildTree(list, item.id);
-                    if (children.length) {
-                        item.children = children;
-                    }
-                    branch.push(item);
-                }
-            });
-            return branch;
-        }
-
-        // Рекурсивный рендер HTML-дерева
-        function renderTreeHtml(nodes) {
-            let html = '';
-            nodes.forEach(node => {
-                const hasChildren = node.children && node.children.length > 0;
-                const statusClass = `status-${node.status || 'todo'}`;
-                
-                html += `<div class="task-container">`;
-                html += `
-                    <div class="task-card" onclick="toggleDetails(event, '${node.id}')">
-                        <div class="task-header">
-                            <div class="task-title">
-                                ${hasChildren ? '<span class="toggle-btn">▼</span>' : '•'}
-                                <span>${node.title}</span>
-                            </div>
-                            <span class="status-badge ${statusClass}">${node.status || 'todo'}</span>
-                        </div>
-                        <div class="task-details" id="details-${node.id}">
-                            <div class="notes-content">${node.notes || '<i>Нет описания</i>'}</div>
-                            ${node.astro_coordinates ? `
-                                <h4>📥 Входные данные (JSON):</h4>
-                                <pre>${JSON.stringify(node.astro_coordinates, null, 2)}</pre>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                
-                if (hasChildren) {
-                    html += `<div class="tree-node">${renderTreeHtml(node.children)}</div>`;
-                }
-                html += `</div>`;
-            });
-            return html;
-        }
-
-        // Главная функция загрузки
-        async function initWorkspace() {
-            try {
-                // Запрашиваем абсолютно все задачи без авторизации (как Гость)
-                const records = await pb.collection('tasks').getFullList({
-                    sort: '-created',
-                });
-
-                if (records.length === 0) {
-                    document.getElementById('workspace-tree').innerHTML = '<p>Задач пока нет. Создайте их через cURL!</p>';
-                    return;
-                }
-
-                // Превращаем плоские строки в дерево и выводим на экран
-                const treeData = buildTree(records);
-                document.getElementById('workspace-tree').innerHTML = renderTreeHtml(treeData);
-
-            } catch (err) {
-                document.getElementById('workspace-tree').innerHTML = `<p style="color: #ef4444;">Ошибка подключения к PocketBase: ${err.message}</p>`;
-            }
-        }
-
-        initWorkspace();
-    </script>
+    <!-- Подключаем скрипт логики в самом конце body -->
+    <script src="app.js"></script>
 </body>
 </html>
